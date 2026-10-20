@@ -1,0 +1,8 @@
+{
+  "name": "Samajdaar erp making ",
+  "description": "Real-time synchronized HR, payroll, statutory compliance, and file management ERP for Arora Textiles Private Limited.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
