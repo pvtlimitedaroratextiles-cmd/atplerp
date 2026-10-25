@@ -82,21 +82,21 @@
 <script src="pdf.min.js"></script>
 <script src="xlsx.full.min.js"></script>
 <script>
-  window.LIVE_CLOUD_RUN_URL = "https://ais-pre-5dmriq7sq2k46cg6hcjgz5-909075195436.asia-east1.run.app";
+    window.ATPL_GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby99_893hVtbWOQr67ikxIwiq81MWW8JAa2LuxTu67JBxjQ_iWb-YkqhBmW0RrHU512SQ/exec";
   (function() {
     try {
-      var host = (window.location && window.location.hostname) || ;
-      if (host === localhost || host === 127.0.0.1 || /\.run\.app$/i.test(host)) {
-        window.__ATPL_CENTRAL_BACKEND_URL = window.location.origin || ;
+      var host = (window.location && window.location.hostname) || '';
+      if (host === 'localhost' || host === '127.0.0.1' || /\.run\.app$/i.test(host)) {
+        window.__ATPL_CENTRAL_BACKEND_URL = window.location.origin || '';
       } else {
-        window.__ATPL_CENTRAL_BACKEND_URL = window.LIVE_CLOUD_RUN_URL || ;
+        window.__ATPL_CENTRAL_BACKEND_URL = window.ATPL_GOOGLE_APPS_SCRIPT_URL;
       }
     } catch (_) {
-      window.__ATPL_CENTRAL_BACKEND_URL = window.LIVE_CLOUD_RUN_URL || ;
+      window.__ATPL_CENTRAL_BACKEND_URL = window.ATPL_GOOGLE_APPS_SCRIPT_URL;
     }
   })();
   window.ATPL_GET_API_BASE = function() {
-    return window.__ATPL_CENTRAL_BACKEND_URL || window.LIVE_CLOUD_RUN_URL || ;
+    return window.__ATPL_CENTRAL_BACKEND_URL || window.ATPL_GOOGLE_APPS_SCRIPT_URL;
   };
 </script>
 <script src="pako.min.js"></script>
@@ -12183,7 +12183,7 @@ function hrDocToggleWindow(){
   function addType(){var name=prompt('Naya document type ka naam likho:');if(!name)return;name=name.trim();if(!name)return;var a=getTypes();if(a.some(function(x){return x.toLowerCase()===name.toLowerCase();})){alert('Ye document type already hai.');return;}a.push(name);saveTypes(a);refreshTypeOptions(name);var f=document.getElementById('hrDocTypeFilter');if(f&&!Array.from(f.options).some(function(o){return o.value===name;})){var o=document.createElement('option');o.value=name;o.textContent=name;f.appendChild(o);}}
   function updateBadge(){var b=document.getElementById('hrDocsBadge');if(!b)return;var n=Array.isArray(DOCS)?DOCS.length:0;b.textContent=String(n);b.style.display=n>0?'inline-flex':'none';}
   function notifyStatus(){var e=document.getElementById('hrDocNotifyStatus');if(!e)return;if(!('Notification'in window)){e.textContent='Desktop notification: Browser not supported';return;}if(!window.isSecureContext && location.protocol!=='https:' && location.hostname!=='localhost'){e.textContent='Desktop notification: HTTPS/localhost required';return;}e.textContent='Desktop notifications: '+(Notification.permission==='granted'?'Enabled 🔔':'Not enabled — click Enable');}
-  function requestNotify(){if(!('Notification'in window)){showToast('🔔 Is browser mein desktop notifications supported nahi hain. In-app alerts active rahenge.');return;}if(!window.isSecureContext && location.protocol!=='https:' && location.hostname!=='localhost'){showToast('🔔 Desktop notification ke liye software ko HTTPS ya localhost par chalana hoga.');notifyStatus();return;}try{var p=Notification.requestPermission();if(p&&p.then)p.then(function(x){notifyStatus();if(x==='granted'){showDesktopTest();checkAlerts(false);}else showToast('🔔 Notification permission allow nahi hui. In-app alerts phir bhi active rahenge.');});}catch(e){showToast('������ Desktop notification unavailable. In-app alerts active hain.');}}
+  function requestNotify(){if(!('Notification'in window)){showToast('🔔 Is browser mein desktop notifications supported nahi hain. In-app alerts active rahenge.');return;}if(!window.isSecureContext && location.protocol!=='https:' && location.hostname!=='localhost'){showToast('🔔 Desktop notification ke liye software ko HTTPS ya localhost par chalana hoga.');notifyStatus();return;}try{var p=Notification.requestPermission();if(p&&p.then)p.then(function(x){notifyStatus();if(x==='granted'){showDesktopTest();checkAlerts(false);}else showToast('🔔 Notification permission allow nahi hui. In-app alerts phir bhi active rahenge.');});}catch(e){showToast('������ Desktop notification unavailable. In-app alerts active hain.');}}
   function showDesktopTest(){try{var n=new Notification('Arora Textiles — HR Documents',{body:'🔔 Desktop notifications successfully enabled. Due/expired documents ka alert yahan aayega.',tag:'arora-hr-test',requireInteraction:false});n.onclick=function(){try{window.focus();}catch(e){}};}catch(e){}}
   function showToast(html){var t=document.getElementById('hrNotifyToast');if(!t)return;t.innerHTML=html;t.classList.add('show');clearTimeout(window.__hrToastTimer);window.__hrToastTimer=setTimeout(function(){t.classList.remove('show');},7000);} window.showToast=showToast;
   function sendNotify(d,st){if(!('Notification'in window)||Notification.permission!=='granted')return;var key='hrdoc_'+d.id+'_'+st.k+'_'+new Date().toISOString().slice(0,10);try{if(localStorage.getItem(key))return;localStorage.setItem(key,'1');var msg=(d.document_name||'Document')+(st.n<0?' — expired '+Math.abs(st.n)+' day(s) ago.':' — '+(st.n===0?'due today.':st.n+' days remaining.'));var n=new Notification('Arora Textiles — HR Document Alert',{body:msg,tag:'hrdoc-'+d.id,requireInteraction:true,silent:false});n.onclick=function(){try{window.focus();}catch(e){};try{showAlerts();}catch(e){}};}catch(e){console.warn('Desktop notification failed',e);}}

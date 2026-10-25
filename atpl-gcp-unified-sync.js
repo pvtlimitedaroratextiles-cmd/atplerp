@@ -21,7 +21,7 @@
       }
     } catch (_) {}
     // Fallback for GitHub Pages or external hosts: active Cloud Run deployment URL
-    return 'https://ais-pre-5dmriq7sq2k46cg6hcjgz5-909075195436.asia-east1.run.app';
+    return 'https://script.google.com/macros/s/AKfycby99_893hVtbWOQr67ikxIwiq81MWW8JAa2LuxTu67JBxjQ_iWb-YkqhBmW0RrHU512SQ/exec';
   }
 
   var BACKEND_URL = getBackendBase();
@@ -75,11 +75,59 @@
   // SSE REAL-TIME CONNECTION
   // ═══════════════════════════════════════════════════════════════
   var evtSource = null;
+  // Cross-Tab Broadcast Channel (0ms Real-Time Sync)
+  var syncBroadcast = null;
+  try {
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      syncBroadcast = new BroadcastChannel('atpl_drive_sync_bus');
+      syncBroadcast.onmessage = function (ev) {
+        if (!ev || !ev.data) return;
+        var msg = ev.data;
+        if (msg.type === 'file_created') {
+          addLog('📥 Instant Cross-Tab Sync: "' + msg.data.name + '"', 'upload');
+          state.files[msg.data.id] = msg.data;
+          delete state.tombstones[msg.data.id];
+          renderInspectorFiles();
+          window.dispatchEvent(new CustomEvent('atpl-file-sync-created', { detail: msg.data }));
+          if (typeof window.renderAllSalaryFiles === 'function') window.renderAllSalaryFiles();
+          if (typeof window.renderHrDocsList === 'function') window.renderHrDocsList();
+        } else if (msg.type === 'file_deleted') {
+          addLog('🗑️ Instant Cross-Tab Delete: File "' + msg.data.id + '"', 'delete');
+          delete state.files[msg.data.id];
+          state.tombstones[msg.data.id] = msg.data.deletedAt || Date.now();
+          purgeLocalCache(msg.data.id);
+          renderInspectorFiles();
+          window.dispatchEvent(new CustomEvent('atpl-file-sync-deleted', { detail: msg.data }));
+          if (typeof window.renderAllSalaryFiles === 'function') window.renderAllSalaryFiles();
+          if (typeof window.renderHrDocsList === 'function') window.renderHrDocsList();
+        } else if (msg.type === 'cloud_refresh') {
+          fetchServerFiles();
+        }
+      };
+    }
+  } catch (_) {}
+
   function connectSSE() {
     try {
       if (evtSource) {
         evtSource.close();
       }
+      var isLocalOrCloudRun = (function() {
+        try {
+          var h = (window.location && window.location.hostname) || '';
+          return h === 'localhost' || h === '127.0.0.1' || /\.run\.app$/i.test(h);
+        } catch (_) { return false; }
+      })();
+
+      if (!isLocalOrCloudRun) {
+        // On GitHub Pages or static host: Google Drive / Google Sheets backend via Apps Script!
+        state.connected = true;
+        addLog('🟢 Connected to Google Drive / Sheet Cloud Backend', 'success');
+        updateInspectorStatus();
+        setInterval(fetchServerFiles, 8000);
+        return;
+      }
+
       var sseUrl = BACKEND_URL + '/api/sync/events';
       evtSource = new EventSource(sseUrl);
 
@@ -231,15 +279,40 @@
     },
     uploadFile: async function (fileRecord) {
       try {
-        var res = await fetch(BACKEND_URL + '/api/sync/files', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(fileRecord)
-        });
-        var data = await res.json();
-        addLog('✅ Uploaded to GCP Backend: "' + fileRecord.name + '"', 'upload');
-        fetchServerFiles();
-        return data;
+        var isExpressBackend = (function() {
+          try {
+            var h = (window.location && window.location.hostname) || '';
+            return h === 'localhost' || h === '127.0.0.1' || /\.run\.app$/i.test(h);
+          } catch (_) { return false; }
+        })();
+
+        if (isExpressBackend) {
+          var res = await fetch(BACKEND_URL + '/api/sync/files', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(fileRecord)
+          });
+          var data = await res.json();
+          addLog('✅ Uploaded to Cloud Backend: "' + fileRecord.name + '"', 'upload');
+          fetchServerFiles();
+          if (syncBroadcast) syncBroadcast.postMessage({ type: 'file_created', data: fileRecord });
+          return data;
+        } else {
+          // Direct Google Drive & Sheet sync on GitHub Pages!
+          if (window.ATPLCloudSharedStorageV1) {
+            if (fileRecord.module === 'salary' && fileRecord.data) {
+              await window.ATPLCloudSharedStorageV1.saveSalary(fileRecord.name, fileRecord.data, fileRecord.savedAt || new Date().toISOString());
+            } else if (fileRecord.module === 'hr_doc') {
+              await window.ATPLCloudSharedStorageV1.saveHrDoc(fileRecord);
+            }
+          }
+          state.files[fileRecord.id] = fileRecord;
+          delete state.tombstones[fileRecord.id];
+          renderInspectorFiles();
+          addLog('✅ Uploaded to Google Drive & Sheet: "' + fileRecord.name + '"', 'upload');
+          if (syncBroadcast) syncBroadcast.postMessage({ type: 'file_created', data: fileRecord });
+          return { ok: true, success: true, id: fileRecord.id };
+        }
       } catch (e) {
         addLog('❌ Upload failed: ' + e.message, 'error');
         throw e;
@@ -247,14 +320,40 @@
     },
     deleteFile: async function (fileId, module) {
       try {
-        var res = await fetch(BACKEND_URL + '/api/sync/files/' + encodeURIComponent(fileId) + '?module=' + (module || 'salary'), {
-          method: 'DELETE'
-        });
-        var data = await res.json();
-        purgeLocalCache(fileId);
-        addLog('🗑️ Deleted from GCP Backend: "' + fileId + '"', 'delete');
-        fetchServerFiles();
-        return data;
+        var isExpressBackend = (function() {
+          try {
+            var h = (window.location && window.location.hostname) || '';
+            return h === 'localhost' || h === '127.0.0.1' || /\.run\.app$/i.test(h);
+          } catch (_) { return false; }
+        })();
+
+        if (isExpressBackend) {
+          var res = await fetch(BACKEND_URL + '/api/sync/files/' + encodeURIComponent(fileId) + '?module=' + (module || 'salary'), {
+            method: 'DELETE'
+          });
+          var data = await res.json();
+          purgeLocalCache(fileId);
+          addLog('🗑️ Deleted from Cloud Backend: "' + fileId + '"', 'delete');
+          fetchServerFiles();
+          if (syncBroadcast) syncBroadcast.postMessage({ type: 'file_deleted', data: { id: fileId, deletedAt: Date.now() } });
+          return data;
+        } else {
+          // Direct Google Drive / Sheet delete on GitHub Pages!
+          if (window.ATPLCloudSharedStorageV1) {
+            if (module === 'salary') {
+              await window.ATPLCloudSharedStorageV1.deleteSalary(fileId);
+            } else if (module === 'hr_doc') {
+              await window.ATPLCloudSharedStorageV1.deleteHrDoc(fileId);
+            }
+          }
+          delete state.files[fileId];
+          state.tombstones[fileId] = Date.now();
+          purgeLocalCache(fileId);
+          renderInspectorFiles();
+          addLog('🗑️ Deleted from Google Drive & Sheet: "' + fileId + '"', 'delete');
+          if (syncBroadcast) syncBroadcast.postMessage({ type: 'file_deleted', data: { id: fileId, deletedAt: Date.now() } });
+          return { ok: true, success: true, id: fileId };
+        }
       } catch (e) {
         addLog('❌ Delete failed: ' + e.message, 'error');
         throw e;

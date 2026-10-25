@@ -15,12 +15,12 @@
   'use strict';
 
   function detectBackendUrl() {
-    if (typeof window === 'undefined' || !window.location) return 'https://ais-pre-2vnnysb742azuzgorygr6z-909075195436.asia-east1.run.app';
+    if (typeof window === 'undefined' || !window.location) return 'https://script.google.com/macros/s/AKfycby99_893hVtbWOQr67ikxIwiq81MWW8JAa2LuxTu67JBxjQ_iWb-YkqhBmW0RrHU512SQ/exec';
     var host = window.location.hostname || '';
     if (host === 'localhost' || host === '127.0.0.1' || /\.run\.app$/i.test(host)) {
       return window.location.origin || '';
     }
-    return (window.LIVE_CLOUD_RUN_URL || window.__ATPL_CENTRAL_BACKEND_URL || 'https://ais-pre-2vnnysb742azuzgorygr6z-909075195436.asia-east1.run.app');
+    return (window.LIVE_CLOUD_RUN_URL || window.__ATPL_CENTRAL_BACKEND_URL || 'https://script.google.com/macros/s/AKfycby99_893hVtbWOQr67ikxIwiq81MWW8JAa2LuxTu67JBxjQ_iWb-YkqhBmW0RrHU512SQ/exec');
   }
 
   var API_BASE = detectBackendUrl();
@@ -145,7 +145,8 @@
       }
 
       this.connectSSE();
-      this.connectFirebase();
+      // Firebase removed for Google Drive/Sheet
+      // this.connectFirebase();
       this.bindWindowEvents();
       setTimeout(() => { this.reconcileAll(true); }, 300);
       this.fetchEmployeeMasterOnStartup();
