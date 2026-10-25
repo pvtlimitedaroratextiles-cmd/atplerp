@@ -4483,9 +4483,26 @@ async function handleFiles(list) {
         FILES = (FILES || []).filter(function(f) { return f && f.name !== file.name; });
         FILES.push({ name: file.name, wb: wb, sheets: sheets, buf: buf, savedAt: now });
         saveFileToDB(file.name, buf);
+        var b64Payload = '';
+        try {
+          if (typeof atplBufToB64 === 'function') b64Payload = atplBufToB64(buf);
+          else if (window.atplBufToB64) b64Payload = window.atplBufToB64(buf);
+          else {
+            var u8 = new Uint8Array(buf), s = '';
+            for (var bi = 0; bi < u8.length; bi += 0x4000) s += String.fromCharCode.apply(null, u8.subarray(bi, Math.min(u8.length, bi + 0x4000)));
+            b64Payload = btoa(s);
+          }
+        } catch (_) {}
+
+        // Save to Google Drive / Google Sheets Cloud Storage
+        if (window.ATPLCloudSharedStorageV1 && typeof window.ATPLCloudSharedStorageV1.saveSalary === 'function') {
+          try { window.ATPLCloudSharedStorageV1.saveSalary(file.name, buf, now).catch(function(){}); } catch (_) {}
+        }
+        if (window.atplSync && typeof window.atplSync.uploadFile === 'function') {
+          try { window.atplSync.uploadFile({ id: file.name, name: file.name, module: 'salary', data: b64Payload, savedAt: now, uploadedBy: 'Admin' }).catch(function(){}); } catch (_) {}
+        }
         if (window.ATPLFirebase && typeof window.ATPLFirebase.saveSalaryFile === 'function') {
-          var b64Payload = atplBufToB64(buf);
-          await window.ATPLFirebase.saveSalaryFile(file.name, { original_b64: b64Payload, name: file.name }, { name: file.name, saved_at: now, uploaded_by: 'admin' });
+          try { await window.ATPLFirebase.saveSalaryFile(file.name, { original_b64: b64Payload, name: file.name }, { name: file.name, saved_at: now, uploaded_by: 'admin' }); } catch (_) {}
         }
       } catch(err) {
         console.warn('Error saving ' + file.name, err);
@@ -4541,6 +4558,12 @@ function rmFile(i) {
     FILES = (window.FILES || []).filter(function(x) { return x && x.name !== name; });
     window.FILES = FILES;
     deleteFromDB(name);
+    if (window.ATPLCloudSharedStorageV1 && typeof window.ATPLCloudSharedStorageV1.deleteSalary === 'function') {
+      try { window.ATPLCloudSharedStorageV1.deleteSalary(name).catch(function(){}); } catch(_) {}
+    }
+    if (window.atplSync && typeof window.atplSync.deleteFile === 'function') {
+      try { window.atplSync.deleteFile(name, 'salary').catch(function(){}); } catch(_) {}
+    }
     if (window.ATPLFirebase && typeof window.ATPLFirebase.deleteSalaryFile === 'function') {
       window.ATPLFirebase.deleteSalaryFile(name, 'admin').catch(function(){});
     }
@@ -4557,6 +4580,9 @@ function clearAllFiles() {
     window.FILES = [];
     FILES = [];
     clearDB();
+    if (window.ATPLCloudSharedStorageV1 && typeof window.ATPLCloudSharedStorageV1.clearSalaryDb === 'function') {
+      try { window.ATPLCloudSharedStorageV1.clearSalaryDb().catch(function(){}); } catch(_) {}
+    }
     if (window.ATPLFirebase && typeof window.ATPLFirebase.clearAllSalaryFiles === 'function') {
       window.ATPLFirebase.clearAllSalaryFiles('admin').catch(function(){});
     }
@@ -15397,16 +15423,11 @@ else AInit();
 <script src="atpl-ai.js?v=1790186846404&cb=20261019v12"></script>
 <script src="erp-ui-cleanup-v1.js?v=20260918-2&cb=20261019v12"></script>
 <script src="employee-master-persistence-guard-v1.js?v=20261015-verified-delete-pdf-v1&cb=20261019v12"></script>
-<!-- Conflicting backend script removed: replaced by atpl-gcp-unified-sync.js -->
-<!-- ATPL AUTHORITATIVE GCP MASTER REAL-TIME SYNC -->
+<!-- GOOGLE DRIVE & GOOGLE SHEETS UNIFIED REAL-TIME SYNC ENGINES -->
+<script src="erp-cloud-shared-storage-v1.js"></script>
+<script src="atpl-realtime-sync-engine.js"></script>
+<script src="atpl-central-file-sync.js"></script>
 <script src="atpl-gcp-unified-sync.js"></script>
-<!-- Conflicting backend script removed: replaced by atpl-gcp-unified-sync.js -->
-<!-- Conflicting backend script removed: replaced by atpl-gcp-unified-sync.js -->
-<!-- ATPL CENTRAL BACKEND-AUTHORITATIVE FILE SYNC ENGINE -->
-<!-- Conflicting backend script removed: replaced by atpl-gcp-unified-sync.js -->
-<!-- END ENGINE -->
-<!-- atpl-firebase-bundle loaded in head -->
-<!-- Conflicting backend script removed: replaced by atpl-gcp-unified-sync.js -->
 <script src="erp-durable-everything-v1.js?v=20260922-system-records-authority17-kind-scoped-dol&cb=20261019v12"></script>
 <script src="bank-account-verifier-loader-v1.js?v=20260919-lazy-fast10&cb=20261019v12"></script>
 <script src="bank-account-verifier-v4-persistence.js?v=20260919-lazy-fast10&cb=20261019v12"></script>
