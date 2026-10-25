@@ -15,14 +15,13 @@
   'use strict';
 
   function detectBackendUrl() {
-    if (typeof window === 'undefined' || !window.location) return 'https://script.google.com/macros/s/AKfycby99_893hVtbWOQr67ikxIwiq81MWW8JAa2LuxTu67JBxjQ_iWb-YkqhBmW0RrHU512SQ/exec';
+    if (typeof window === 'undefined' || !window.location) return '';
     var host = window.location.hostname || '';
     if (host === 'localhost' || host === '127.0.0.1' || /\.run\.app$/i.test(host)) {
       return window.location.origin || '';
     }
-    return (window.LIVE_CLOUD_RUN_URL || window.__ATPL_CENTRAL_BACKEND_URL || 'https://script.google.com/macros/s/AKfycby99_893hVtbWOQr67ikxIwiq81MWW8JAa2LuxTu67JBxjQ_iWb-YkqhBmW0RrHU512SQ/exec');
+    return '';
   }
-
   var API_BASE = detectBackendUrl();
 
   async function computeSha256(data) {
@@ -793,7 +792,7 @@
           } catch (_) {}
         }
 
-        if (!this.apiBase && window.ATPLCloudSharedStorageV1 && typeof window.ATPLCloudSharedStorageV1.syncNow === "function") {
+        if ((!this.apiBase || !backendSuccess) && window.ATPLCloudSharedStorageV1 && typeof window.ATPLCloudSharedStorageV1.syncNow === "function") {
           try { window.ATPLCloudSharedStorageV1.syncNow(!!force).catch(function(){}); } catch (_) {}
         }
         if (!backendSuccess && window.ATPLFirebase && typeof window.ATPLFirebase.fetchAllSalaryFiles === 'function') {

@@ -48,7 +48,7 @@ function parseText(t){
 function timeoutFor(action,asked){
   if(action==='login')return Math.max(24000,Number(asked)||24000);
   if(asked&&asked>0)return Math.max(3000,Math.min(30000,asked));
-  if(action==='getSystemRecords')return 24000;
+  if(action==='getSystemRecords')return 35000;
   if(action==='getDOLRecords'||action==='searchDOLIndex'||action==='getDOLFileInfo'||action==='getDOLFileChunk')return 22000;
   if(action==='listComplianceCalendar')return 15000;
   if(READ_ACTIONS[action])return 14000;

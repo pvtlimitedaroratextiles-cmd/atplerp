@@ -82,21 +82,22 @@
 <script src="pdf.min.js"></script>
 <script src="xlsx.full.min.js"></script>
 <script>
-    window.ATPL_GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby99_893hVtbWOQr67ikxIwiq81MWW8JAa2LuxTu67JBxjQ_iWb-YkqhBmW0RrHU512SQ/exec";
+  window.ATPL_GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby99_893hVtbWOQr67ikxIwiq81MWW8JAa2LuxTu67JBxjQ_iWb-YkqhBmW0RrHU512SQ/exec";
   (function() {
     try {
       var host = (window.location && window.location.hostname) || '';
       if (host === 'localhost' || host === '127.0.0.1' || /\.run\.app$/i.test(host)) {
         window.__ATPL_CENTRAL_BACKEND_URL = window.location.origin || '';
       } else {
-        window.__ATPL_CENTRAL_BACKEND_URL = window.ATPL_GOOGLE_APPS_SCRIPT_URL;
+        // On GitHub Pages or static hosts, no Express server exists. Google Drive & Sheets is the sole cloud backend!
+        window.__ATPL_CENTRAL_BACKEND_URL = '';
       }
     } catch (_) {
-      window.__ATPL_CENTRAL_BACKEND_URL = window.ATPL_GOOGLE_APPS_SCRIPT_URL;
+      window.__ATPL_CENTRAL_BACKEND_URL = '';
     }
   })();
   window.ATPL_GET_API_BASE = function() {
-    return window.__ATPL_CENTRAL_BACKEND_URL || window.ATPL_GOOGLE_APPS_SCRIPT_URL;
+    return window.__ATPL_CENTRAL_BACKEND_URL || '';
   };
 </script>
 <script src="pako.min.js"></script>

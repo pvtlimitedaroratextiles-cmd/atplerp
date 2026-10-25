@@ -59,17 +59,14 @@
   // Only use Express backend if running on localhost / 127.0.0.1 / active .run.app host
   function getLocalServerBase() {
     try {
-      if (typeof window === 'undefined' || !window.location) return 'https://script.google.com/macros/s/AKfycby99_893hVtbWOQr67ikxIwiq81MWW8JAa2LuxTu67JBxjQ_iWb-YkqhBmW0RrHU512SQ/exec';
-      var origin = window.location.origin || '';
+      if (typeof window === 'undefined' || !window.location) return '';
       var host = window.location.hostname || '';
       if (host === 'localhost' || host === '127.0.0.1' || /\.run\.app$/i.test(host)) {
-        return origin;
+        return window.location.origin || '';
       }
-      return (window.LIVE_CLOUD_RUN_URL || window.__ATPL_CENTRAL_BACKEND_URL || 'https://script.google.com/macros/s/AKfycby99_893hVtbWOQr67ikxIwiq81MWW8JAa2LuxTu67JBxjQ_iWb-YkqhBmW0RrHU512SQ/exec');
     } catch (_) {}
-    return 'https://script.google.com/macros/s/AKfycby99_893hVtbWOQr67ikxIwiq81MWW8JAa2LuxTu67JBxjQ_iWb-YkqhBmW0RrHU512SQ/exec';
+    return '';
   }
-
   window.__ATPL_CENTRAL_BACKEND_URL = getLocalServerBase();
   window.ATPL_GET_API_BASE = getLocalServerBase;
 
