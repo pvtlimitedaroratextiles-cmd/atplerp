@@ -740,19 +740,12 @@
  }
 
  async function syncNow(force){
-   var fbOk=false;
-   if(!root.__atplFirebaseQuotaExhausted&&root.ATPLFirebase&&typeof root.ATPLFirebase.fetchAllSalaryFiles==='function'){
-     try{
-       if(typeof root.ATPLFirebase.fetchAllTombstones==='function'){
-         var fbTombs=await root.ATPLFirebase.fetchAllTombstones();
-         if(Array.isArray(fbTombs)&&fbTombs.length)await handleFirebaseTombstonesUpdate(fbTombs);
-       }
-       var fbFiles=await root.ATPLFirebase.fetchAllSalaryFiles();
-       await handleFirebaseFilesUpdate({all:fbFiles,removedNames:[]});
-       fbOk=true;
-     }catch(e){console.warn('Firebase manual fetch warning',e)}
-   }
-   if(sharedSalaryAuthority){
+  if(sharedSalaryAuthority){
+    var salOk = await syncSharedSalary(force);
+    if(typeof root.hrDocGetDocs === 'function'){ try{ await syncSharedHr(force); } catch(_){} }
+    return salOk;
+  }
+  if(sharedSalaryAuthority){
      var salOk=await syncSharedSalary(force);
      if(typeof root.hrDocGetDocs==='function'){try{await syncSharedHr(force)}catch(_){}}
      return salOk||fbOk;
