@@ -1857,6 +1857,7 @@ body.hr-docs-windowed #page-hrdocs.active.hr-windowed, #page-hrdocs.active.hr-wi
       <div class="dot"></div>
       <span id="storageLbl">IndexedDB Ready</span>
     </div>
+    <button onclick="window.atplLogout()" id="btnHeaderLogout" style="display:flex;align-items:center;gap:6px;padding:6px 14px;background:#ef4444;border:1px solid #dc2626;color:#ffffff;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;box-shadow:0 0 10px rgba(239,68,68,0.25);" title="Logout karein aur Login Screen par wapas jayein">🚪 Logout</button>
   </div>
 </div>
 
@@ -15447,6 +15448,26 @@ else AInit();
 <script src="erp-enterprise-ui-v1.js?v=20261026-drive-sync-v1"></script>
 <script src="employee-master-confirmed-save-v1.js?v=20261026-drive-sync-v1"></script>
 <script>
+
+window.atplLogout = function() {
+  ['ATPL_UserSession_V1','ATPL_UserSession_V2','ATPL_UserSession_V3','ATPL_UserSession_V4','ATPL_UserSession_V5','ATPL_RemoteToken_V1','ATPL_SharedToken_V1'].forEach(function(k){
+    try { sessionStorage.removeItem(k); localStorage.removeItem(k); } catch(_) {}
+  });
+  var lp = document.getElementById('landingPage');
+  if (lp) { lp.style.display = 'none'; lp.style.opacity = '0'; }
+  var l = document.getElementById('uaLogin');
+  if (l) {
+    l.style.display = 'flex';
+    document.body.classList.add('uaLocked');
+    var uid = document.getElementById('uaLoginId');
+    var upw = document.getElementById('uaLoginPass');
+    if (uid) uid.value = '';
+    if (upw) upw.value = '';
+    var err = document.getElementById('uaLoginErr');
+    if (err) err.textContent = '';
+  }
+};
+
 window.atplTriggerCrossSync = async function(manual) {
   var btnLbl = document.getElementById("crossSyncBtnLbl");
   if (btnLbl) btnLbl.textContent = "Syncing...";

@@ -16,7 +16,7 @@ function text(v){return v==null?'':String(v).trim()}
 function isOwner(id){return /^(admin|nikhil\s*1911|arora|hr)$/i.test(text(id))}
 function current(){
   try{
-    var s=json(root.sessionStorage.getItem(SESS)||root.localStorage.getItem(SESS)||'null',null);
+    var s=json(root.sessionStorage.getItem(SESS)||'null',null);
     if(!s||!s.id)return null;
     var list=json(root.localStorage.getItem(USERS)||'[]',[]),id=text(s.id).toLowerCase();
     var u=(Array.isArray(list)?list:[]).find(function(x){return text(x&&x.id).toLowerCase()===id});
