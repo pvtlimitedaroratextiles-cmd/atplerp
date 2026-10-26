@@ -76,7 +76,7 @@ function jsonp(params,timeout){
     root[cb]=function(data){finish();resolve(data||{})};
     var p=Object.assign({},cleanParams(params),{callback:cb,_ts:now()});
     s.async=true;
-    s.crossOrigin='anonymous';
+    // s.crossOrigin removed for Google Apps Script 302 redirects
     s.addEventListener('error',function(ev){if(ev&&ev.stopPropagation)ev.stopPropagation();if(ev&&ev.preventDefault)ev.preventDefault();finish();reject(new Error('CLOUD_NETWORK'))},true);
     s.onerror=function(ev){if(ev&&ev.stopPropagation)ev.stopPropagation();if(ev&&ev.preventDefault)ev.preventDefault();finish();reject(new Error('CLOUD_NETWORK'))};
     s.src=API+'?'+qs(p);(root.document.head||root.document.documentElement).appendChild(s)
@@ -134,9 +134,8 @@ async function transport(params,opts){
   }catch(e){last=e}
 
   // 3. Fallback to jsonp only when not in an iframe (iframes block Apps Script)
-  var isIframe=false;
-  try{isIframe=root.self!==root.top}catch(_){isIframe=true}
-  if(!isIframe){
+  // Always allow jsonp transport on static hosting (GitHub Pages)
+  if(true){
     for(var i=0;i<tries;i++){
       try{
         var data=await jsonp(params,timeout+(i*3000));
@@ -278,7 +277,8 @@ async function request(params,opts){
     if(action==='login'&&data&&data.ok&&data.token){
       saveRealToken(data.token);
     }
-    if(action!=='ping'&&action!=='login'&&data&&data.ok===false&&/Valid login session required/i.test(String(data.error||''))&&!opts._retriedAuth){
+    if(action!=='ping'&&action!=='login'&&data&&data.ok===false&&/Valid login/i.test(String(data.error||''))&&!opts._retriedAuth){
+      try{saveRealToken('');}catch(_){}
       var fresh=await ensureCloudToken(true);
       if(fresh){
         delete cache[k];

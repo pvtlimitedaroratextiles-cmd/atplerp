@@ -247,6 +247,18 @@
   // ═══════════════════════════════════════════════════════════════
   async function fetchServerFiles() {
     try {
+      var isLocalServer = (function() {
+        try {
+          var h = String(window.location && window.location.hostname || '');
+          return h === 'localhost' || h === '127.0.0.1' || /\.run\.app$/i.test(h);
+        } catch(_) { return false; }
+      })();
+      if (!isLocalServer) {
+        if (window.ATPLCloudSharedStorageV1 && typeof window.ATPLCloudSharedStorageV1.syncNow === 'function') {
+          await window.ATPLCloudSharedStorageV1.syncNow(false);
+        }
+        return;
+      }
       var start = Date.now();
       var res = await fetch(BACKEND_URL + '/api/sync/files-meta', { cache: 'no-store' });
       var data = await res.json();

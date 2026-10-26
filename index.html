@@ -12085,6 +12085,12 @@ function hrDocToggleWindow(){
 
   function fetchServerDocs() {
     var base = (typeof window.ATPL_GET_API_BASE === 'function' ? window.ATPL_GET_API_BASE() : (window.__ATPL_CENTRAL_BACKEND_URL || ''));
+    if (!base || !/^(https?:\/\/localhost|https?:\/\/127\.0\.0\.1|https?:\/\/.*\.run\.app)/i.test(base)) {
+      if (window.ATPLCloudSharedStorageV1 && typeof window.ATPLCloudSharedStorageV1.syncHrNow === 'function') {
+        window.ATPLCloudSharedStorageV1.syncHrNow(false).catch(function(){});
+      }
+      return;
+    }
     fetch(base + '/api/sync/state')
       .then(function(res){ return res.json(); })
       .then(function(state){
@@ -15608,6 +15614,7 @@ window.triggerManualHrSync = async function() {
 };
 
 window.triggerManualCrossBrowserSync = async function() {
+  if (window.showToast) window.showToast('☁️ Google Drive & Sheets se sync ho raha hai...');
   var btn = document.getElementById('btnForceCrossBrowserSync');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Syncing...'; }
   try {
